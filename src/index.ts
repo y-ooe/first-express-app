@@ -1,5 +1,6 @@
 import express from 'express';
 import cookieParser from 'cookie-parser';
+import passport from './config/passport.js';
 import type { Express, Request, Response, NextFunction } from 'express';
 import { ageCheck } from './middlewares/ageCheck.js';
 import { authGuard } from './middlewares/authGurard.js';
@@ -17,6 +18,7 @@ const loggerMiddleware = (req: Request, res: Response, next: NextFunction) => {
 // 全てのルートに適用する
 app.use(loggerMiddleware);
 app.use(cookieParser()); // これで req.cookies が使えるようになる
+app.use(passport.initialize()); // パスポートを初期化
 
 
 app.get('/', (req: Request, res: Response) => {
@@ -62,6 +64,19 @@ app.get('/dashboard', authSession, (req, res) => {
   res.send('VIPラウンジへようこそ！');
 })
 
+
+// 1.GitHubログイン画面へ飛ばす
+app.get('/auth/github',
+  passport.authenticate('github', { scope: ['user:email'] })
+);
+
+// 2.GitHubから帰ってくる場所(callback)
+app.get('/auth/github/callback',
+  passport.authenticate('github', { failureRedirect: '/login' }),
+  (req, res) => {
+    res.redirect('/'); //成功したらトップページへ
+  }
+);
 
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
