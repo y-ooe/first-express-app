@@ -1,4 +1,5 @@
 import express from 'express';
+import session from 'express-session';
 import cookieParser from 'cookie-parser';
 import passport from './config/passport.js';
 import type { Express, Request, Response, NextFunction } from 'express';
@@ -15,14 +16,27 @@ const loggerMiddleware = (req: Request, res: Response, next: NextFunction) => {
   next(); // これを忘れると、ブラウザの読み込みが止まったままになります！
 };
 
+// 1. セッションの設定（passportより先に書く！）
+app.use(session({
+  secret: 'secret-key-y_ooe', // 適当な長い文字列でOK（本来は.envへ）
+  resave: false,
+  saveUninitialized: false,
+  cookie: { httpOnly: true, secure: false } // 開発中はsecure: falseでOK
+}));
+
 // 全てのルートに適用する
 app.use(loggerMiddleware);
 app.use(cookieParser()); // これで req.cookies が使えるようになる
 app.use(passport.initialize()); // パスポートを初期化
+app.use(passport.session());
 
 
 app.get('/', (req: Request, res: Response) => {
   res.send('TOPページです');
+});
+
+app.get('/success', (req: Request, res: Response) => {
+  res.send('認証成功');
 });
 
 app.get('/beer', ageCheck, (req: Request, res: Response) => {
@@ -74,7 +88,7 @@ app.get('/auth/github',
 app.get('/auth/github/callback',
   passport.authenticate('github', { failureRedirect: '/login' }),
   (req, res) => {
-    res.redirect('/'); //成功したらトップページへ
+    res.redirect('/success'); //成功したらトップページへ
   }
 );
 

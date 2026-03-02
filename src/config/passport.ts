@@ -21,5 +21,15 @@ passport.use(new GitHubStrategy({
     }
 ));
 
+// ユーザー情報をセッションに保存するルール（今回は情報をまるごと保存）
+passport.serializeUser((user, done) => {
+    done(null, user);
+});
+
+// セッションからユーザー情報を取り出すルール
+passport.deserializeUser((obj: any, done) => {
+    done(null, obj);
+});
+
 // passportの設定自体をエクスポートする
 export default passport;
